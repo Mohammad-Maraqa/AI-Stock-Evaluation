@@ -1,6 +1,12 @@
+import logging
+
 from ta.momentum import RSIIndicator
 from ta.trend import SMAIndicator, MACD, EMAIndicator
 from ta.volatility import BollingerBands
+
+from config import get_sector_pe_median, TECHNICAL_SIGNAL_WEIGHTS
+
+logger = logging.getLogger(__name__)
 
 
 class ScoringEngine:
@@ -12,8 +18,8 @@ class ScoringEngine:
             try:
                 if name in df.index:
                     return df.loc[name]
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("Unable to read candidate row %s: %s", name, exc)
         return None
 
     # ─────────────────────────────────────────────────────────
@@ -44,14 +50,14 @@ class ScoringEngine:
 
         # (label, bullish=1/bearish=-1, weight)
         signals = [
-            ('Price Above SMA 200',  1 if price > sma_200        else -1, 25),
-            ('Price Above SMA 50',   1 if price > sma_50         else -1, 20),
-            ('Golden Cross Active',  1 if sma_50 > sma_200       else -1, 15),
-            ('MACD Bullish Cross',   1 if macd_line > macd_signal else -1, 15),
-            ('MACD Above Zero',      1 if macd_line > 0           else -1, 10),
-            ('RSI Momentum',         1 if (is_uptrend and 50 <= rsi <= 82) or (not is_uptrend and rsi < 45) else -1, 8),
-            ('Price Above EMA 20',   1 if price > ema_20          else -1,  5),
-            ('BB Band Position',     1 if (is_uptrend and price >= bb_high * 0.98) or (not is_uptrend and price < bb_high) else -1, 2),
+            ('Price Above SMA 200',  1 if price > sma_200        else -1, TECHNICAL_SIGNAL_WEIGHTS['Price Above SMA 200']),
+            ('Price Above SMA 50',   1 if price > sma_50         else -1, TECHNICAL_SIGNAL_WEIGHTS['Price Above SMA 50']),
+            ('Golden Cross Active',  1 if sma_50 > sma_200       else -1, TECHNICAL_SIGNAL_WEIGHTS['Golden Cross Active']),
+            ('MACD Bullish Cross',   1 if macd_line > macd_signal else -1, TECHNICAL_SIGNAL_WEIGHTS['MACD Bullish Cross']),
+            ('MACD Above Zero',      1 if macd_line > 0           else -1, TECHNICAL_SIGNAL_WEIGHTS['MACD Above Zero']),
+            ('RSI Momentum',         1 if (is_uptrend and 50 <= rsi <= 82) or (not is_uptrend and rsi < 45) else -1, TECHNICAL_SIGNAL_WEIGHTS['RSI Momentum']),
+            ('Price Above EMA 20',   1 if price > ema_20          else -1, TECHNICAL_SIGNAL_WEIGHTS['Price Above EMA 20']),
+            ('BB Band Position',     1 if (is_uptrend and price >= bb_high * 0.98) or (not is_uptrend and price < bb_high) else -1, TECHNICAL_SIGNAL_WEIGHTS['BB Band Position']),
         ]
 
         total_w     = sum(w for _, _, w in signals)
@@ -80,6 +86,11 @@ class ScoringEngine:
             empty_meta["summary"] = "No relevant news found."
             return 0, empty_meta
 
+        depth_counts = {
+            "article": sum(1 for item in headlines if item.get("analysis_depth") == "article"),
+            "headline": sum(1 for item in headlines if item.get("analysis_depth") != "article"),
+        }
+
         bull_pow = bear_pow = bull_cnt = bear_cnt = neut_cnt = 0
         for item in headlines:
             sentiment = item.get('sentiment', '').lower()
@@ -98,13 +109,14 @@ class ScoringEngine:
 
         return final_score, {
             "summary": summary, "details": headlines,
-            "counts": {"bull": bull_cnt, "bear": bear_cnt, "neut": neut_cnt}
+            "counts": {"bull": bull_cnt, "bear": bear_cnt, "neut": neut_cnt},
+            "analysis_depth_counts": depth_counts,
         }
 
     # ─────────────────────────────────────────────────────────
     #  DERIVATIVES
     # ─────────────────────────────────────────────────────────
-    def calculate_derivative(self, data):
+    def calculate_derivative(self, data, technical_trend=None):
         if not data.get('valid'):
             return 0, {}
 
@@ -117,10 +129,11 @@ class ScoringEngine:
         scores = {}
         options_signal_count = sum(value is not None for value in (pcr_vol, pcr_oi, avg_iv))
         short_signal_count = sum(value is not None for value in (short_float, short_ratio))
+        is_uptrend = self.current_tech_trend if technical_trend is None else technical_trend
 
         if short_float is not None:
             sf = short_float * 100
-            if not self.current_tech_trend:
+            if not is_uptrend:
                 float_score = 15 if sf > 10 else 50
             else:
                 float_score = 70 if sf < 3 else 30 if sf > 15 else 50
@@ -128,7 +141,7 @@ class ScoringEngine:
 
         if short_ratio is not None:
             sf_pct = short_float * 100 if short_float is not None else 0
-            if not self.current_tech_trend:
+            if not is_uptrend:
                 ratio_score = 20 if short_ratio > 5 else 50
             else:
                 ratio_score = 85 if short_ratio > 8 and sf_pct > 10 else 60 if short_ratio < 3 else 35
@@ -149,7 +162,7 @@ class ScoringEngine:
 
         if avg_iv is not None:
             iv_pct = avg_iv * 100
-            if self.current_tech_trend:
+            if is_uptrend:
                 if iv_pct > 80:   iv_score = 25
                 elif iv_pct > 60: iv_score = 42
                 elif iv_pct > 40: iv_score = 60
@@ -219,16 +232,7 @@ class ScoringEngine:
 
         is_distressed = (roe is not None and roe < 0) or (margins is not None and margins < 0)
 
-        sector_pe_median = {
-            'Technology': 32, 'Communication Services': 22,
-            'Consumer Cyclical': 25, 'Consumer Defensive': 22,
-            'Healthcare': 28, 'Biotechnology': 35,
-            'Financial Services': 14, 'Financials': 14,
-            'Industrials': 20, 'Basic Materials': 16,
-            'Energy': 13, 'Utilities': 18, 'Real Estate': 38,
-            'Semiconductor': 30, 'Software': 35, 'Retail': 20, 'Automotive': 14,
-        }
-        pe_median = sector_pe_median.get(sector, 20)
+        pe_median = get_sector_pe_median(sector)
 
         # ── Piotroski (display badge only) ───────────────────
         p_score, p_signals, p_raw, p_max = self._piotroski(info)
@@ -445,7 +449,8 @@ class ScoringEngine:
                     if roa_c is not None and roa_p is not None:
                         v = 1 if roa_c > roa_p else 0; score += v
                         signals['ΔROA Improving'] = v
-                except Exception: pass
+                except Exception as exc:
+                    logger.debug("Unable to calculate Piotroski ROA trend: %s", exc)
 
             if cf_row is not None and ta is not None and ni is not None:
                 try:
@@ -455,7 +460,8 @@ class ScoringEngine:
                     if cfroa is not None and roa2 is not None:
                         v = 1 if cfroa > roa2 else 0; score += v
                         signals['Earnings Quality (CFO > NI)'] = v
-                except Exception: pass
+                except Exception as exc:
+                    logger.debug("Unable to calculate Piotroski earnings quality: %s", exc)
 
             if ltd is not None and ta is not None:
                 try:
@@ -464,7 +470,8 @@ class ScoringEngine:
                     if lev_c is not None and lev_p is not None:
                         v = 1 if lev_c <= lev_p else 0; score += v
                         signals['Leverage Stable/Falling'] = v
-                except Exception: pass
+                except Exception as exc:
+                    logger.debug("Unable to calculate Piotroski leverage signal: %s", exc)
 
             if ca is not None and cl is not None:
                 try:
@@ -473,13 +480,15 @@ class ScoringEngine:
                     if cr_c is not None and cr_p is not None:
                         v = 1 if cr_c >= cr_p else 0; score += v
                         signals['Liquidity Improving'] = v
-                except Exception: pass
+                except Exception as exc:
+                    logger.debug("Unable to calculate Piotroski liquidity signal: %s", exc)
 
             if sh is not None:
                 try:
                     v = 1 if sh.iloc[0] <= sh.iloc[1] * 1.02 else 0; score += v
                     signals['No Share Dilution'] = v
-                except Exception: pass
+                except Exception as exc:
+                    logger.debug("Unable to calculate Piotroski dilution signal: %s", exc)
 
             if gp is not None and rev is not None:
                 try:
@@ -488,7 +497,8 @@ class ScoringEngine:
                     if gm_c is not None and gm_p is not None:
                         v = 1 if gm_c >= gm_p else 0; score += v
                         signals['Gross Margin Stable/Rising'] = v
-                except Exception: pass
+                except Exception as exc:
+                    logger.debug("Unable to calculate Piotroski gross margin signal: %s", exc)
 
             if rev is not None and ta is not None and len(ta) > 2:
                 try:
@@ -497,7 +507,8 @@ class ScoringEngine:
                     if at_c is not None and at_p is not None:
                         v = 1 if at_c >= at_p else 0; score += v
                         signals['Asset Turnover Improving'] = v
-                except Exception: pass
+                except Exception as exc:
+                    logger.debug("Unable to calculate Piotroski asset turnover signal: %s", exc)
 
         n = len(signals)
         if n == 0:

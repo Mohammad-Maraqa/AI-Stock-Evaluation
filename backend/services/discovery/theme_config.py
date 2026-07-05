@@ -1,0 +1,148 @@
+DISCOVERY_THEMES = {
+    "ai_infrastructure": {
+        "name": "AI Infrastructure",
+        "description": "Companies exposed to AI compute, servers, networking, data centers, and power infrastructure.",
+        "keywords": ["AI infrastructure", "artificial intelligence infrastructure", "AI servers", "data center chips", "AI networking"],
+        "etf_keywords": ["artificial intelligence ETF", "semiconductor ETF", "robotics ETF"],
+        "seed_etfs": ["SMH", "SOXX", "BOTZ"],
+        "nasdaq_industry_keywords": ["Semiconductors", "Computer Hardware", "Information Technology Services"],
+        "business_summary_keywords": ["artificial intelligence", "data center", "semiconductor", "GPU", "accelerator", "server", "networking"],
+        "headline_keywords": ["AI", "data center", "accelerator", "GPU", "cloud"],
+        "min_relevance": 50,
+    },
+    "semiconductors": {
+        "name": "Semiconductors",
+        "description": "Chip designers, manufacturers, equipment vendors, and semiconductor supply-chain companies.",
+        "keywords": ["semiconductor", "chip", "wafer", "foundry"],
+        "etf_keywords": ["semiconductor ETF"],
+        "seed_etfs": ["SMH", "SOXX"],
+        "nasdaq_industry_keywords": ["Semiconductors", "Electronic Components"],
+        "business_summary_keywords": ["semiconductor", "chip", "wafer", "foundry", "integrated circuit"],
+        "headline_keywords": ["semiconductor", "chip", "foundry"],
+        "min_relevance": 50,
+    },
+    "data_centers": {
+        "name": "Data Centers",
+        "description": "Infrastructure companies tied to data center capacity, cooling, networking, and power.",
+        "keywords": ["data center", "colocation", "cloud infrastructure"],
+        "etf_keywords": ["data center ETF", "infrastructure ETF"],
+        "seed_etfs": ["VPN", "SRVR"],
+        "nasdaq_industry_keywords": ["Real Estate Investment Trusts", "Computer Hardware", "Utilities"],
+        "business_summary_keywords": ["data center", "colocation", "cloud", "cooling", "power management"],
+        "headline_keywords": ["data center", "cloud", "capacity"],
+        "min_relevance": 50,
+    },
+    "power_grid_electrification": {
+        "name": "Power Grid & Electrification",
+        "description": "Grid equipment, electrical infrastructure, power management, and electrification suppliers.",
+        "keywords": ["electrification", "power grid", "electrical equipment"],
+        "etf_keywords": ["grid ETF", "clean energy infrastructure ETF"],
+        "seed_etfs": ["GRID", "PAVE"],
+        "nasdaq_industry_keywords": ["Electrical Products", "Utilities", "Industrial Machinery"],
+        "business_summary_keywords": ["grid", "electrification", "electrical", "transformer", "power management"],
+        "headline_keywords": ["grid", "electricity", "power"],
+        "min_relevance": 50,
+    },
+    "nuclear_energy_security": {
+        "name": "Nuclear & Energy Security",
+        "description": "Nuclear fuel, uranium, reactors, and energy-security infrastructure.",
+        "keywords": ["nuclear energy", "uranium", "energy security"],
+        "etf_keywords": ["uranium ETF", "nuclear ETF"],
+        "seed_etfs": ["URA", "URNM"],
+        "nasdaq_industry_keywords": ["Mining", "Utilities", "Oil & Gas Production"],
+        "business_summary_keywords": ["nuclear", "uranium", "reactor", "energy security"],
+        "headline_keywords": ["nuclear", "uranium", "reactor"],
+        "min_relevance": 50,
+    },
+    "cybersecurity": {
+        "name": "Cybersecurity",
+        "description": "Security software, identity, cloud defense, and network protection companies.",
+        "keywords": ["cybersecurity", "security software", "identity security"],
+        "etf_keywords": ["cybersecurity ETF"],
+        "seed_etfs": ["HACK", "CIBR"],
+        "nasdaq_industry_keywords": ["Computer Software", "Information Technology Services"],
+        "business_summary_keywords": ["cybersecurity", "security", "identity", "firewall", "threat"],
+        "headline_keywords": ["cybersecurity", "security", "breach"],
+        "min_relevance": 50,
+    },
+    "robotics_automation": {
+        "name": "Robotics & Automation",
+        "description": "Robotics, industrial automation, factory systems, and autonomous equipment companies.",
+        "keywords": ["robotics", "automation", "industrial automation"],
+        "etf_keywords": ["robotics ETF", "automation ETF"],
+        "seed_etfs": ["BOTZ", "ROBO"],
+        "nasdaq_industry_keywords": ["Industrial Machinery", "Computer Hardware"],
+        "business_summary_keywords": ["robotics", "automation", "autonomous", "factory"],
+        "headline_keywords": ["robotics", "automation"],
+        "min_relevance": 50,
+    },
+    "defense_technology": {
+        "name": "Defense Technology",
+        "description": "Defense electronics, aerospace systems, sensors, drones, and secure communications.",
+        "keywords": ["defense technology", "aerospace defense", "drones"],
+        "etf_keywords": ["defense ETF", "aerospace ETF"],
+        "seed_etfs": ["ITA", "XAR"],
+        "nasdaq_industry_keywords": ["Aerospace", "Military/Government/Technical"],
+        "business_summary_keywords": ["defense", "aerospace", "missile", "drone", "sensor"],
+        "headline_keywords": ["defense", "aerospace", "drone"],
+        "min_relevance": 50,
+    },
+    "space_satellite": {
+        "name": "Space & Satellite Infrastructure",
+        "description": "Satellite networks, launch systems, space infrastructure, and communications providers.",
+        "keywords": ["space", "satellite", "launch"],
+        "etf_keywords": ["space ETF", "satellite ETF"],
+        "seed_etfs": ["ARKX", "UFO"],
+        "nasdaq_industry_keywords": ["Telecommunications Equipment", "Aerospace"],
+        "business_summary_keywords": ["space", "satellite", "launch", "orbital"],
+        "headline_keywords": ["space", "satellite", "launch"],
+        "min_relevance": 50,
+    },
+    "biotech_ai_healthcare": {
+        "name": "Biotech & AI Healthcare",
+        "description": "Biotech, diagnostics, and healthcare companies using AI-enabled discovery or care tools.",
+        "keywords": ["biotech", "AI healthcare", "drug discovery"],
+        "etf_keywords": ["biotech ETF", "healthcare innovation ETF"],
+        "seed_etfs": ["XBI", "IBB"],
+        "nasdaq_industry_keywords": ["Biotechnology", "Medical/Dental Instruments"],
+        "business_summary_keywords": ["biotechnology", "drug discovery", "clinical", "diagnostic", "AI"],
+        "headline_keywords": ["biotech", "clinical", "AI"],
+        "min_relevance": 50,
+    },
+    "battery_critical_minerals": {
+        "name": "Battery Storage & Critical Minerals",
+        "description": "Battery storage, lithium, rare earths, and critical-mineral supply-chain companies.",
+        "keywords": ["battery storage", "lithium", "critical minerals"],
+        "etf_keywords": ["battery ETF", "lithium ETF"],
+        "seed_etfs": ["LIT", "BATT"],
+        "nasdaq_industry_keywords": ["Mining", "Electrical Products"],
+        "business_summary_keywords": ["battery", "lithium", "critical minerals", "rare earth"],
+        "headline_keywords": ["battery", "lithium", "minerals"],
+        "min_relevance": 50,
+    },
+    "cloud_software_infrastructure": {
+        "name": "Cloud & Software Infrastructure",
+        "description": "Cloud platforms, infrastructure software, observability, and developer tooling companies.",
+        "keywords": ["cloud software", "software infrastructure", "observability"],
+        "etf_keywords": ["cloud computing ETF", "software ETF"],
+        "seed_etfs": ["CLOU", "IGV"],
+        "nasdaq_industry_keywords": ["Computer Software", "Information Technology Services"],
+        "business_summary_keywords": ["cloud", "software infrastructure", "observability", "developer", "platform"],
+        "headline_keywords": ["cloud", "software", "platform"],
+        "min_relevance": 50,
+    },
+}
+
+
+def list_themes():
+    return [
+        {"id": theme_id, "name": theme["name"], "description": theme["description"]}
+        for theme_id, theme in DISCOVERY_THEMES.items()
+    ]
+
+
+def get_theme(theme_id):
+    theme = DISCOVERY_THEMES.get(theme_id)
+    if theme is None:
+        return None
+    return {"id": theme_id, **theme}

@@ -1,12 +1,13 @@
-streamlit
 plotly
 yfinance
 pandas
 ta
 requests
-beautifulsoup4
-groq
 python-dotenv
+fastapi
+uvicorn
+pydantic
+scrapy
 
 ### for testing #########
 

@@ -9,5 +9,10 @@ venv/
 # Streamlit
 .streamlit/secrets.toml
 
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+
 # OS
 .DS_Store

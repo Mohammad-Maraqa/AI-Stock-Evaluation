@@ -30,3 +30,19 @@ def test_piotroski_f_score_logic():
     )
     assert isinstance(score, (int, float))
     assert isinstance(signals, dict)
+
+def test_derivative_scoring_accepts_explicit_technical_trend():
+    engine = ScoringEngine()
+    data = {
+        "valid": True,
+        "short_float": 0.12,
+        "short_ratio": 9,
+        "pcr_vol": 0.5,
+        "pcr_oi": 0.5,
+        "avg_iv": 0.25,
+    }
+
+    uptrend_score, _ = engine.calculate_derivative(data, technical_trend=True)
+    downtrend_score, _ = engine.calculate_derivative(data, technical_trend=False)
+
+    assert uptrend_score > downtrend_score

@@ -1,19 +1,61 @@
-import pytest
-from unittest.mock import patch, MagicMock
-from data_loader import DataLoader
+from pathlib import Path
+from unittest.mock import MagicMock
 
-@patch('data_loader.Groq')
-def test_groq_key_rotation(mock_groq_class):
-    # Setup mock to simulate a failure on the first key and success on the second
-    instance = mock_groq_class.return_value
-    instance.chat.completions.create.side_effect = [Exception("Rate Limit"), MagicMock()]
-    
-    loader = DataLoader()
-    # Force some mock keys into the pool 
-    loader.api_key_pool = ["key1", "key2"]
-    
-    # This calls the method that uses Groq 
-    loader.get_competitors("AAPL", "Apple", "Tech", "iPhone")
-    
-    # Verify it tried to call Groq 
-    assert mock_groq_class.call_count >= 1
+from backend.services.market_data import MarketDataProvider, fetch_with_retry, resolve_ticker
+
+
+def test_source_files_do_not_import_legacy_data_loader():
+    project_root = Path(__file__).resolve().parents[1]
+    source_files = [
+        *project_root.glob("*.py"),
+        *project_root.glob("backend/**/*.py"),
+        *project_root.glob("tests/**/*.py"),
+    ]
+
+    offenders = []
+    for path in source_files:
+        if path.name == "test_data_loader.py":
+            continue
+        text = path.read_text(encoding="utf-8")
+        if "data_loader" in text or "DataLoader" in text:
+            offenders.append(str(path.relative_to(project_root)))
+
+    assert offenders == []
+
+def test_fetch_with_retry_returns_first_non_none_result():
+    attempts = {"count": 0}
+
+    def fetch():
+        attempts["count"] += 1
+        return "ok" if attempts["count"] == 2 else None
+
+    assert fetch_with_retry(fetch, retries=3, delay=0) == "ok"
+    assert attempts["count"] == 2
+
+def test_fetch_with_retry_returns_fallback_after_exceptions():
+    def fetch():
+        raise RuntimeError("temporary failure")
+
+    assert fetch_with_retry(fetch, retries=2, delay=0, fallback="fallback") == "fallback"
+
+def test_convert_name_to_ticker_returns_uppercase_ticker_without_lookup():
+    assert resolve_ticker("AAPL") == "AAPL"
+
+def test_convert_name_to_ticker_resolves_us_equity_from_yahoo_search():
+    response = MagicMock()
+    response.json.return_value = {
+        "quotes": [
+            {"quoteType": "ETF", "exchange": "NYQ", "symbol": "SPY"},
+            {"quoteType": "EQUITY", "exchange": "NMS", "symbol": "AAPL"},
+        ]
+    }
+    session = MagicMock()
+    session.get.return_value = response
+
+    assert resolve_ticker("Apple", session_factory=lambda: session) == "AAPL"
+
+
+def test_market_data_provider_uses_internal_ticker_resolution():
+    provider = MarketDataProvider(ticker_factory=lambda ticker: MagicMock())
+
+    assert provider.resolve_ticker("AAPL") == "AAPL"
